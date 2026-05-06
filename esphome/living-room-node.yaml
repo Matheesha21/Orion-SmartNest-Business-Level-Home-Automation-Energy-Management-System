@@ -1,0 +1,159 @@
+# =============================================================================
+# Orion SmartNest – Living Room ESP32 Node
+# Board   : ESP32-WROOM-32 / ESP32 DevKit v1
+# Features: PIR motion, DHT22 temp/humidity, relay light, relay fan,
+#            door magnetic sensor, buzzer security alert
+# =============================================================================
+
+substitutions:
+  device_name: orion-living-room
+  friendly_name: "Orion Living Room"
+  # GPIO assignments – see docs/pin-mapping.md for wiring details
+  pir_pin: GPIO34          # PIR motion sensor (input-only pin)
+  dht_pin: GPIO21          # DHT22 data pin
+  relay_light_pin: GPIO26  # Relay channel 1 – main ceiling light
+  relay_fan_pin: GPIO27    # Relay channel 2 – ceiling fan
+  door_sensor_pin: GPIO35  # Magnetic door/window sensor (input-only pin)
+  buzzer_pin: GPIO25       # Passive buzzer for security alert
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Pull in shared configuration (Wi-Fi, API, OTA, diagnostics)
+packages:
+  base: !include common/base-config.yaml
+
+# ---------------------------------------------------------------------------
+# PIR Motion Sensor
+# ---------------------------------------------------------------------------
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: ${pir_pin}
+      mode: INPUT
+    name: "${friendly_name} Motion"
+    device_class: motion
+    id: pir_motion
+    filters:
+      # Debounce – ignore pulses shorter than 500 ms
+      - delayed_off: 500ms
+    on_press:
+      # Turn light on when motion detected
+      then:
+        - switch.turn_on: relay_light
+        - logger.log: "Motion detected – light ON"
+    on_release:
+      # Notify HA that motion stopped; HA automation handles the 10-min delay
+      then:
+        - logger.log: "Motion cleared"
+
+  # Magnetic door/window sensor
+  - platform: gpio
+    pin:
+      number: ${door_sensor_pin}
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${friendly_name} Door"
+    device_class: door
+    id: door_sensor
+    on_press:
+      then:
+        - logger.log: "Living room door opened"
+    on_release:
+      then:
+        - logger.log: "Living room door closed"
+
+# ---------------------------------------------------------------------------
+# DHT22 Temperature & Humidity Sensor
+# ---------------------------------------------------------------------------
+sensor:
+  - platform: dht
+    pin: ${dht_pin}
+    model: DHT22
+    temperature:
+      name: "${friendly_name} Temperature"
+      id: living_room_temp
+      accuracy_decimals: 1
+      filters:
+        # Smooth sensor readings with a sliding window average
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    humidity:
+      name: "${friendly_name} Humidity"
+      id: living_room_humidity
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    update_interval: 30s
+
+# ---------------------------------------------------------------------------
+# Relay Switches (active-LOW – most common relay modules)
+# ---------------------------------------------------------------------------
+switch:
+  - platform: gpio
+    pin:
+      number: ${relay_light_pin}
+      inverted: true   # Active-LOW relay board
+    name: "${friendly_name} Light"
+    id: relay_light
+    icon: mdi:ceiling-light
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: gpio
+    pin:
+      number: ${relay_fan_pin}
+      inverted: true
+    name: "${friendly_name} Fan"
+    id: relay_fan
+    icon: mdi:fan
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---------------------------------------------------------------------------
+# Buzzer – security alert output
+# ---------------------------------------------------------------------------
+output:
+  - platform: ledc
+    pin: ${buzzer_pin}
+    id: buzzer_output
+    frequency: 2000Hz
+
+# Expose buzzer as a tone-capable light so HA can script alert patterns
+light:
+  - platform: monochromatic
+    output: buzzer_output
+    name: "${friendly_name} Security Buzzer"
+    id: security_buzzer
+    icon: mdi:alarm-bell
+    restore_mode: ALWAYS_OFF
+
+# ---------------------------------------------------------------------------
+# Automation: turn fan ON/OFF based on temperature thresholds
+# (HA can also override via the relay_fan switch entity)
+# ---------------------------------------------------------------------------
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            sensor.in_range:
+              id: living_room_temp
+              above: 28.0   # °C – turn fan on above this threshold
+          then:
+            - switch.turn_on: relay_fan
+          else:
+            - if:
+                condition:
+                  sensor.in_range:
+                    id: living_room_temp
+                    below: 25.0   # °C – turn fan off below this threshold
+                then:
+                  - switch.turn_off: relay_fan

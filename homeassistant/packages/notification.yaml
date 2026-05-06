@@ -1,0 +1,25 @@
+# =============================================================================
+# Orion SmartNest – Notification Package
+# Configures notification channels and persistent notification helpers.
+# =============================================================================
+
+# Persistent notification helper (used by energy and security automations)
+notify:
+  # IMPORTANT: Replace 'mobile_app_your_device' with the entity ID of your
+  # Home Assistant companion app notifier.
+  # To find your notifier: Settings → Devices & Services → Mobile App →
+  # select your device. The notify service will be listed there, e.g.:
+  #   mobile_app_pixel_6
+  #   mobile_app_my_iphone_15
+  # Update the 'service' value below accordingly.
+  - name: all_devices
+    platform: group
+    services:
+      - service: mobile_app_your_device   # <-- UPDATE THIS per your device
+      - service: persistent_notification
+
+# Input boolean used as a "notification acknowledged" flag
+input_boolean:
+  notifications_acknowledged:
+    name: "Notifications Acknowledged"
+    icon: mdi:bell-check

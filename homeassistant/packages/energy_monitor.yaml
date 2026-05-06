@@ -1,0 +1,59 @@
+# =============================================================================
+# Orion SmartNest – Energy Monitor Package
+# Template sensors that derive energy statistics from raw sensor data.
+# =============================================================================
+
+template:
+  - sensor:
+      # -----------------------------------------------------------------------
+      # Estimated daily cost per room (example at $0.15/kWh)
+      # Requires the kitchen PZEM-004T energy sensor to be configured.
+      # -----------------------------------------------------------------------
+      - name: "Kitchen Estimated Daily Cost"
+        unique_id: kitchen_estimated_daily_cost
+        unit_of_measurement: "$"
+        icon: mdi:currency-usd
+        state: >
+          {% set kwh = states('sensor.orion_kitchen_energy') | float(0) %}
+          {{ (kwh * 0.15) | round(2) }}
+
+      # Total instantaneous power across all monitored circuits
+      - name: "Total Instantaneous Power"
+        unique_id: total_instantaneous_power
+        unit_of_measurement: W
+        device_class: power
+        state_class: measurement
+        icon: mdi:flash
+        state: >
+          {% set kitchen = states('sensor.orion_kitchen_power') | float(0) %}
+          {{ kitchen | round(1) }}
+
+      # System-wide average temperature
+      - name: "Average Indoor Temperature"
+        unique_id: average_indoor_temperature
+        unit_of_measurement: "°C"
+        device_class: temperature
+        state_class: measurement
+        icon: mdi:thermometer
+        state: >
+          {% set t1 = states('sensor.orion_living_room_temperature') | float(0) %}
+          {% set t2 = states('sensor.orion_bedroom_temperature') | float(0) %}
+          {% set t3 = states('sensor.orion_kitchen_temperature') | float(0) %}
+          {{ ((t1 + t2 + t3) / 3) | round(1) }}
+
+# Utility meter – track energy usage per day / month / year
+utility_meter:
+  energy_daily:
+    source: sensor.orion_kitchen_energy
+    cycle: daily
+    name: "Kitchen Energy Daily"
+
+  energy_monthly:
+    source: sensor.orion_kitchen_energy
+    cycle: monthly
+    name: "Kitchen Energy Monthly"
+
+  energy_yearly:
+    source: sensor.orion_kitchen_energy
+    cycle: yearly
+    name: "Kitchen Energy Yearly"

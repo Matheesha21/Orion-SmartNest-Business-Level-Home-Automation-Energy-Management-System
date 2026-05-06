@@ -1,0 +1,52 @@
+# =============================================================================
+# Orion SmartNest – MQTT Package
+# Defines MQTT sensors, binary sensors, and switches for devices that don't
+# use the native ESPHome API (e.g., third-party smart plugs, custom firmware).
+# =============================================================================
+
+mqtt:
+  # -------------------------------------------------------------------------
+  # Generic MQTT switches (example: third-party smart plug)
+  # -------------------------------------------------------------------------
+  switch:
+    - unique_id: mqtt_smart_plug_office
+      name: "Office Smart Plug"
+      state_topic: "smartnest/office/plug/state"
+      command_topic: "smartnest/office/plug/set"
+      payload_on: "ON"
+      payload_off: "OFF"
+      retain: true
+      icon: mdi:power-socket-au
+      qos: 1
+
+  # -------------------------------------------------------------------------
+  # Energy totals published by external energy logger
+  # -------------------------------------------------------------------------
+  sensor:
+    - unique_id: mqtt_energy_daily_total
+      name: "Daily Energy Total"
+      state_topic: "smartnest/energy/daily_kwh"
+      unit_of_measurement: kWh
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:lightning-bolt
+
+    - unique_id: mqtt_energy_monthly_total
+      name: "Monthly Energy Total"
+      state_topic: "smartnest/energy/monthly_kwh"
+      unit_of_measurement: kWh
+      device_class: energy
+      state_class: total_increasing
+      icon: mdi:lightning-bolt
+
+  # -------------------------------------------------------------------------
+  # Security alarm panel status
+  # -------------------------------------------------------------------------
+  binary_sensor:
+    - unique_id: mqtt_alarm_tamper
+      name: "Security Tamper Alert"
+      state_topic: "smartnest/security/tamper"
+      payload_on: "DETECTED"
+      payload_off: "CLEAR"
+      device_class: tamper
+      expire_after: 120

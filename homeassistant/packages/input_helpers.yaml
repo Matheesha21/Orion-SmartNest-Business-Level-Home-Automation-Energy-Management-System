@@ -1,0 +1,76 @@
+# =============================================================================
+# Orion SmartNest – Input Helpers Package
+# input_boolean, input_number, and input_select used by automations.
+# =============================================================================
+
+input_boolean:
+  # ---- Security Mode --------------------------------------------------------
+  security_mode:
+    name: "Security Mode"
+    icon: mdi:shield-lock
+
+  # ---- Energy Saving Mode --------------------------------------------------
+  energy_saving_mode:
+    name: "Energy Saving Mode"
+    icon: mdi:leaf
+
+  # ---- Guest Mode -----------------------------------------------------------
+  guest_mode:
+    name: "Guest Mode"
+    icon: mdi:account-multiple
+
+input_number:
+  # ---- Lighting auto-off timer (minutes) ------------------------------------
+  light_auto_off_delay:
+    name: "Light Auto-Off Delay"
+    min: 1
+    max: 60
+    step: 1
+    initial: 10
+    unit_of_measurement: min
+    icon: mdi:timer-outline
+    mode: slider
+
+  # ---- Fan temperature threshold (°C) --------------------------------------
+  fan_temp_threshold_on:
+    name: "Fan ON Threshold"
+    min: 20
+    max: 40
+    step: 0.5
+    initial: 28
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-high
+    mode: slider
+
+  fan_temp_threshold_off:
+    name: "Fan OFF Threshold"
+    min: 18
+    max: 38
+    step: 0.5
+    initial: 25
+    unit_of_measurement: "°C"
+    icon: mdi:thermometer-low
+    mode: slider
+
+  # ---- Appliance on-too-long alert threshold (minutes) ---------------------
+  appliance_alert_duration:
+    name: "Appliance Alert Duration"
+    min: 15
+    max: 240
+    step: 15
+    initial: 60
+    unit_of_measurement: min
+    icon: mdi:alert-circle-outline
+    mode: slider
+
+input_select:
+  # ---- Home state -----------------------------------------------------------
+  home_state:
+    name: "Home State"
+    options:
+      - Home
+      - Away
+      - Night
+      - Guest
+    initial: Home
+    icon: mdi:home

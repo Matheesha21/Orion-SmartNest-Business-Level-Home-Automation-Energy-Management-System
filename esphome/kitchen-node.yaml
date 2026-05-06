@@ -1,0 +1,177 @@
+# =============================================================================
+# Orion SmartNest – Kitchen ESP32 Node
+# Board   : ESP32-WROOM-32 / ESP32 DevKit v1
+# Features: PIR motion, DHT22 temp/humidity, relay light,
+#            relay appliance (e.g. exhaust fan / smart socket),
+#            door magnetic sensor, energy monitoring via PZEM-004T
+# =============================================================================
+
+substitutions:
+  device_name: orion-kitchen
+  friendly_name: "Orion Kitchen"
+  # GPIO assignments – see docs/pin-mapping.md
+  pir_pin: GPIO34            # PIR motion sensor
+  dht_pin: GPIO21            # DHT22 data pin
+  relay_light_pin: GPIO26    # Relay channel 1 – kitchen light
+  relay_exhaust_pin: GPIO27  # Relay channel 2 – exhaust fan / appliance
+  door_sensor_pin: GPIO35    # Magnetic door sensor
+  pzem_rx_pin: GPIO16        # PZEM-004T TX → ESP32 RX
+  pzem_tx_pin: GPIO17        # PZEM-004T RX ← ESP32 TX
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+packages:
+  base: !include common/base-config.yaml
+
+# ---------------------------------------------------------------------------
+# UART for PZEM-004T energy meter
+# ---------------------------------------------------------------------------
+uart:
+  id: pzem_uart
+  tx_pin: ${pzem_tx_pin}
+  rx_pin: ${pzem_rx_pin}
+  baud_rate: 9600
+
+# ---------------------------------------------------------------------------
+# PIR & Door Sensors
+# ---------------------------------------------------------------------------
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: ${pir_pin}
+      mode: INPUT
+    name: "${friendly_name} Motion"
+    device_class: motion
+    id: pir_motion
+    filters:
+      - delayed_off: 500ms
+    on_press:
+      then:
+        - switch.turn_on: relay_light
+        - logger.log: "Kitchen motion detected – light ON"
+    on_release:
+      then:
+        - logger.log: "Kitchen motion cleared"
+
+  - platform: gpio
+    pin:
+      number: ${door_sensor_pin}
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${friendly_name} Door"
+    device_class: door
+    id: door_sensor
+    on_press:
+      then:
+        - logger.log: "Kitchen door opened"
+    on_release:
+      then:
+        - logger.log: "Kitchen door closed"
+
+# ---------------------------------------------------------------------------
+# DHT22 Temperature & Humidity
+# ---------------------------------------------------------------------------
+sensor:
+  - platform: dht
+    pin: ${dht_pin}
+    model: DHT22
+    temperature:
+      name: "${friendly_name} Temperature"
+      id: kitchen_temp
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    humidity:
+      name: "${friendly_name} Humidity"
+      id: kitchen_humidity
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    update_interval: 30s
+
+  # PZEM-004T – real-time energy monitoring
+  - platform: pzemac
+    uart_id: pzem_uart
+    current:
+      name: "${friendly_name} Current"
+      id: kitchen_current
+      unit_of_measurement: A
+      accuracy_decimals: 3
+    voltage:
+      name: "${friendly_name} Voltage"
+      id: kitchen_voltage
+      unit_of_measurement: V
+      accuracy_decimals: 1
+    power:
+      name: "${friendly_name} Power"
+      id: kitchen_power
+      unit_of_measurement: W
+      accuracy_decimals: 1
+    energy:
+      name: "${friendly_name} Energy"
+      id: kitchen_energy
+      unit_of_measurement: kWh
+      accuracy_decimals: 3
+    frequency:
+      name: "${friendly_name} Frequency"
+      unit_of_measurement: Hz
+      accuracy_decimals: 1
+    power_factor:
+      name: "${friendly_name} Power Factor"
+      accuracy_decimals: 2
+    update_interval: 10s
+
+# ---------------------------------------------------------------------------
+# Relay Switches
+# ---------------------------------------------------------------------------
+switch:
+  - platform: gpio
+    pin:
+      number: ${relay_light_pin}
+      inverted: true
+    name: "${friendly_name} Light"
+    id: relay_light
+    icon: mdi:ceiling-light
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: gpio
+    pin:
+      number: ${relay_exhaust_pin}
+      inverted: true
+    name: "${friendly_name} Exhaust Fan"
+    id: relay_exhaust
+    icon: mdi:fan
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---------------------------------------------------------------------------
+# Automation: exhaust fan by temperature; energy alert
+# ---------------------------------------------------------------------------
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            sensor.in_range:
+              id: kitchen_temp
+              above: 30.0
+          then:
+            - switch.turn_on: relay_exhaust
+          else:
+            - if:
+                condition:
+                  sensor.in_range:
+                    id: kitchen_temp
+                    below: 26.0
+                then:
+                  - switch.turn_off: relay_exhaust

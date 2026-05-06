@@ -1,0 +1,67 @@
+# =============================================================================
+# Orion SmartNest – Home Assistant Configuration Entry Point
+# Place this file at: /config/configuration.yaml  (Home Assistant OS)
+# =============================================================================
+
+# Loads default set of integrations; do not remove.
+default_config:
+
+# Allow loading the frontend theme from the themes directory
+frontend:
+  themes: !include_dir_merge_named themes
+
+# HTTP configuration – Tailscale handles external TLS; internal only here
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 127.0.0.1          # Localhost proxy
+    - 100.64.0.0/10      # Tailscale CGNAT address range
+
+# Text-to-speech (optional voice alerts)
+tts:
+  - platform: google_translate
+
+# Automations, scripts, scenes managed in separate files
+automation: !include_dir_merge_list automations/
+script: !include scripts/scripts.yaml
+scene: !include_dir_merge_list scenes/
+
+# Packages – modular configuration blocks
+homeassistant:
+  packages:
+    mqtt: !include packages/mqtt.yaml
+    energy_monitor: !include packages/energy_monitor.yaml
+    notification: !include packages/notification.yaml
+    input_helpers: !include packages/input_helpers.yaml
+
+# Logger – info level; raise to debug when troubleshooting
+logger:
+  default: info
+  logs:
+    homeassistant.components.esphome: info
+    homeassistant.components.mqtt: info
+
+# Recorder – store history in SQLite (default) or external database
+recorder:
+  purge_keep_days: 30
+  exclude:
+    domains:
+      - updater
+    entity_globs:
+      - sensor.*_uptime
+
+# History / logbook – retain meaningful events
+history:
+logbook:
+
+# Sun integration for sunrise/sunset automations
+sun:
+
+# MQTT broker details
+mqtt:
+  broker: localhost          # Mosquitto running on the same Pi
+  port: 1883
+  username: !secret mqtt_username
+  password: !secret mqtt_password
+  discovery: true
+  discovery_prefix: homeassistant

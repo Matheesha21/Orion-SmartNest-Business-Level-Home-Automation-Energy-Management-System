@@ -1,0 +1,191 @@
+# =============================================================================
+# Orion SmartNest – Energy Saving Automations
+# Rules:
+#   1. Notify if an appliance has been ON for too long.
+#   2. Turn off all lights when everyone is away.
+#   3. Energy Saving Mode – reduce comfort thresholds and dim usage.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Living Room Light – ON too long alert
+# ---------------------------------------------------------------------------
+- id: energy_living_room_light_on_too_long
+  alias: "Energy | Living Room Light – ON too long"
+  description: >
+    Notify if the living room light has been on for longer than the
+    configured appliance alert duration with no motion detected.
+  trigger:
+    - platform: state
+      entity_id: switch.orion_living_room_light
+      to: "on"
+      for:
+        minutes: "{{ states('input_number.appliance_alert_duration') | int }}"
+  condition:
+    # Only alert if no recent motion
+    - condition: state
+      entity_id: binary_sensor.orion_living_room_motion
+      state: "off"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "⚡ Energy Alert – SmartNest"
+        message: >
+          The living room light has been ON for
+          {{ states('input_number.appliance_alert_duration') | int }} minutes
+          with no motion detected. Consider turning it off.
+        notification_id: "energy_living_room_light"
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: "Energy alert: Living room light on with no motion."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 2. Bedroom Light – ON too long alert
+# ---------------------------------------------------------------------------
+- id: energy_bedroom_light_on_too_long
+  alias: "Energy | Bedroom Light – ON too long"
+  description: "Notify if the bedroom light has been on too long without motion."
+  trigger:
+    - platform: state
+      entity_id: switch.orion_bedroom_light
+      to: "on"
+      for:
+        minutes: "{{ states('input_number.appliance_alert_duration') | int }}"
+  condition:
+    - condition: state
+      entity_id: binary_sensor.orion_bedroom_motion
+      state: "off"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "⚡ Energy Alert – SmartNest"
+        message: >
+          The bedroom light has been ON for
+          {{ states('input_number.appliance_alert_duration') | int }} minutes
+          with no motion detected.
+        notification_id: "energy_bedroom_light"
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: "Energy alert: Bedroom light on with no motion."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 3. Kitchen Exhaust Fan – ON too long alert
+# ---------------------------------------------------------------------------
+- id: energy_kitchen_fan_on_too_long
+  alias: "Energy | Kitchen Exhaust Fan – ON too long"
+  description: "Notify if the kitchen exhaust fan has been running for too long."
+  trigger:
+    - platform: state
+      entity_id: switch.orion_kitchen_exhaust_fan
+      to: "on"
+      for:
+        minutes: "{{ states('input_number.appliance_alert_duration') | int }}"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "⚡ Energy Alert – SmartNest"
+        message: >
+          The kitchen exhaust fan has been running for
+          {{ states('input_number.appliance_alert_duration') | int }} minutes.
+          Verify it is still needed.
+        notification_id: "energy_kitchen_fan"
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: "Energy alert: Kitchen exhaust fan running for extended period."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 4. Away Mode – Turn off all lights and fans when home state = Away
+# ---------------------------------------------------------------------------
+- id: energy_away_mode_all_off
+  alias: "Energy | Away Mode – Turn off all lights and fans"
+  description: "Turn off all lights and fans when home state changes to Away."
+  trigger:
+    - platform: state
+      entity_id: input_select.home_state
+      to: "Away"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.orion_living_room_light
+          - switch.orion_living_room_fan
+          - switch.orion_bedroom_light
+          - switch.orion_bedroom_fan
+          - switch.orion_kitchen_light
+          - switch.orion_kitchen_exhaust_fan
+    - service: notify.persistent_notification
+      data:
+        title: "🏠 SmartNest – Away Mode"
+        message: "Away mode activated. All lights and fans have been turned off."
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: "Away mode: All appliances turned off."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 5. Night Mode – Reduce fan thresholds and ensure lights are off
+# ---------------------------------------------------------------------------
+- id: energy_night_mode_activate
+  alias: "Energy | Night Mode – Activate"
+  description: "Adjust thresholds and ensure lights are off when Night mode is set."
+  trigger:
+    - platform: state
+      entity_id: input_select.home_state
+      to: "Night"
+  action:
+    # Lower the fan ON threshold to improve sleep comfort
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.fan_temp_threshold_on
+      data:
+        value: 26
+    # Raise the auto-off delay so lights do not switch off too quickly
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.light_auto_off_delay
+      data:
+        value: 5
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.orion_living_room_light
+          - switch.orion_kitchen_light
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: "Night mode activated: fan threshold lowered, common lights off."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 6. High Power Consumption Alert (Kitchen PZEM > 2 kW)
+# ---------------------------------------------------------------------------
+- id: energy_high_power_alert_kitchen
+  alias: "Energy | Kitchen – High power consumption alert"
+  description: "Alert when kitchen power exceeds 2000 W for more than 5 minutes."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_kitchen_power
+      above: 2000
+      for: "00:05:00"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "⚡ High Power Alert – SmartNest"
+        message: >
+          Kitchen power consumption is
+          {{ states('sensor.orion_kitchen_power') }} W.
+          Check for appliances left running unnecessarily.
+        notification_id: "energy_high_power_kitchen"
+    - service: logbook.log
+      data:
+        name: "SmartNest Energy"
+        message: >
+          High power alert: Kitchen at
+          {{ states('sensor.orion_kitchen_power') }} W.
+  mode: single

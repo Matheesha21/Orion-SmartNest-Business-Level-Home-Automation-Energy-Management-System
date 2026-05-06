@@ -1,0 +1,161 @@
+# =============================================================================
+# Orion SmartNest – Climate / Fan Automations
+# Rules:
+#   1. Turn fan ON when temperature rises above threshold.
+#   2. Turn fan OFF when temperature drops below lower threshold.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Living Room – Fan ON (high temperature)
+# ---------------------------------------------------------------------------
+- id: living_room_fan_on_high_temp
+  alias: "Climate | Living Room – Fan ON (high temperature)"
+  description: "Turn the living room fan on when temperature exceeds the ON threshold."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_living_room_temperature
+      above: input_number.fan_temp_threshold_on
+  condition:
+    - condition: state
+      entity_id: switch.orion_living_room_fan
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_living_room_fan
+    - service: notify.persistent_notification
+      data:
+        title: "🌡️ SmartNest Climate"
+        message: >
+          Living room temperature reached
+          {{ states('sensor.orion_living_room_temperature') }}°C.
+          Fan has been turned ON automatically.
+  mode: single
+
+# ---------------------------------------------------------------------------
+# Living Room – Fan OFF (temperature normalised)
+# ---------------------------------------------------------------------------
+- id: living_room_fan_off_low_temp
+  alias: "Climate | Living Room – Fan OFF (temperature normalised)"
+  description: "Turn the living room fan off when temperature drops below the OFF threshold."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_living_room_temperature
+      below: input_number.fan_temp_threshold_off
+  condition:
+    - condition: state
+      entity_id: switch.orion_living_room_fan
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_living_room_fan
+    - service: logbook.log
+      data:
+        name: "SmartNest"
+        message: >
+          Living room temperature normalised to
+          {{ states('sensor.orion_living_room_temperature') }}°C.
+          Fan turned OFF.
+  mode: single
+
+# ---------------------------------------------------------------------------
+# Bedroom – Fan ON (high temperature)
+# ---------------------------------------------------------------------------
+- id: bedroom_fan_on_high_temp
+  alias: "Climate | Bedroom – Fan ON (high temperature)"
+  description: "Turn the bedroom fan on when temperature exceeds the ON threshold."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_bedroom_temperature
+      above: input_number.fan_temp_threshold_on
+  condition:
+    - condition: state
+      entity_id: switch.orion_bedroom_fan
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_bedroom_fan
+    - service: notify.persistent_notification
+      data:
+        title: "🌡️ SmartNest Climate"
+        message: >
+          Bedroom temperature reached
+          {{ states('sensor.orion_bedroom_temperature') }}°C.
+          Fan has been turned ON automatically.
+  mode: single
+
+# ---------------------------------------------------------------------------
+# Bedroom – Fan OFF (temperature normalised)
+# ---------------------------------------------------------------------------
+- id: bedroom_fan_off_low_temp
+  alias: "Climate | Bedroom – Fan OFF (temperature normalised)"
+  description: "Turn the bedroom fan off when temperature drops below the OFF threshold."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_bedroom_temperature
+      below: input_number.fan_temp_threshold_off
+  condition:
+    - condition: state
+      entity_id: switch.orion_bedroom_fan
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_bedroom_fan
+    - service: logbook.log
+      data:
+        name: "SmartNest"
+        message: >
+          Bedroom temperature normalised to
+          {{ states('sensor.orion_bedroom_temperature') }}°C.
+          Fan turned OFF.
+  mode: single
+
+# ---------------------------------------------------------------------------
+# Kitchen – Exhaust Fan ON (high temperature)
+# ---------------------------------------------------------------------------
+- id: kitchen_fan_on_high_temp
+  alias: "Climate | Kitchen – Exhaust Fan ON (high temperature)"
+  description: "Turn the kitchen exhaust fan on when temperature exceeds threshold."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_kitchen_temperature
+      above: input_number.fan_temp_threshold_on
+  condition:
+    - condition: state
+      entity_id: switch.orion_kitchen_exhaust_fan
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_kitchen_exhaust_fan
+    - service: notify.persistent_notification
+      data:
+        title: "🌡️ SmartNest Climate"
+        message: >
+          Kitchen temperature reached
+          {{ states('sensor.orion_kitchen_temperature') }}°C.
+          Exhaust fan turned ON.
+  mode: single
+
+# ---------------------------------------------------------------------------
+# Kitchen – Exhaust Fan OFF (temperature normalised)
+# ---------------------------------------------------------------------------
+- id: kitchen_fan_off_low_temp
+  alias: "Climate | Kitchen – Exhaust Fan OFF (temperature normalised)"
+  description: "Turn the kitchen exhaust fan off when temperature normalises."
+  trigger:
+    - platform: numeric_state
+      entity_id: sensor.orion_kitchen_temperature
+      below: input_number.fan_temp_threshold_off
+  condition:
+    - condition: state
+      entity_id: switch.orion_kitchen_exhaust_fan
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_kitchen_exhaust_fan
+  mode: single
