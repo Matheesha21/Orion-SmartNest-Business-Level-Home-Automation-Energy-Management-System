@@ -1,0 +1,1 @@
+# tailscale access config placeholder

@@ -1,0 +1,29 @@
+version: '3.8'
+
+# Note: `network_mode: "host"` gives containers access to the host network.
+# On Docker Desktop for macOS/Windows, host networking is not supported —
+# use bridge mode (default) or set `network_mode: "host"` only on Linux hosts.
+
+services:
+
+	mosquitto:
+		image: eclipse-mosquitto:2.0
+		restart: unless-stopped
+		network_mode: "host"
+		volumes:
+			- ./mqtt-broker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+			- ./mqtt-broker/data:/mosquitto/data
+			- ./mqtt-broker/log:/mosquitto/log
+			- ./mqtt-broker/passwords:/mosquitto/config/passwords:ro
+			- ./mqtt-broker/acl.conf:/mosquitto/config/acl.conf:ro
+
+	homeassistant:
+		image: ghcr.io/home-assistant/home-assistant:stable
+		restart: unless-stopped
+		network_mode: "host"
+		volumes:
+			- ./raspberry-pi/home-assistant:/config
+		environment:
+			- TZ=UTC
+		depends_on:
+			- mosquitto

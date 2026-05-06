@@ -1,0 +1,8 @@
+broker: mosquitto
+port: 1883
+username: YOUR_MQTT_USERNAME
+password: YOUR_MQTT_PASSWORD
+# If using WebSockets or TLS, adjust below
+# protocol: mqtt
+# discovery: true
+

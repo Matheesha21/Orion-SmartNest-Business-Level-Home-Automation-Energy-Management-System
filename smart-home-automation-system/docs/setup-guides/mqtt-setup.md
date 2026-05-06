@@ -1,0 +1,1 @@
+# MQTT setup guide placeholder

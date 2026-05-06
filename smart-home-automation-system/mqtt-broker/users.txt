@@ -1,0 +1,6 @@
+# MQTT password file (managed by mosquitto_passwd)
+# Create users with:
+#   docker exec -it <mosquitto_container> mosquitto_passwd -b /mosquitto/config/passwords <user> <password>
+
+# Example (do NOT store plaintext passwords here):
+# homeassistant: (managed in passwords file)

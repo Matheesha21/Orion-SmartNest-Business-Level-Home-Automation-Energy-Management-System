@@ -1,0 +1,15 @@
+homeassistant:
+	name: Smart Home
+	time_zone: UTC
+
+default_config:
+
+# MQTT configuration (included from mqtt/mqtt-config.yaml)
+mqtt: !include mqtt/mqtt-config.yaml
+
+# Example sensor placeholder
+sensor:
+	- platform: systemmonitor
+		resources:
+			- type: memory_free
+

@@ -1,0 +1,1 @@
+# lighting automation placeholder

@@ -1,0 +1,1 @@
+# ESPHome setup guide placeholder
