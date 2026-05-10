@@ -1,0 +1,111 @@
+# =============================================================================
+# Orion SmartNest – Scripts
+# Reusable script blocks called from automations and the dashboard.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Good Night Script – sets Night mode, turns off common lights
+# ---------------------------------------------------------------------------
+good_night:
+  alias: "Good Night"
+  icon: mdi:weather-night
+  sequence:
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.home_state
+      data:
+        option: Night
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.orion_living_room_light
+          - switch.orion_kitchen_light
+    - service: input_boolean.turn_on
+      target:
+        entity_id: input_boolean.security_mode
+    - service: notify.persistent_notification
+      data:
+        title: "🌙 SmartNest"
+        message: "Good night! Security mode is armed and common lights are off."
+
+# ---------------------------------------------------------------------------
+# Good Morning Script – disarms security, restores default thresholds
+# ---------------------------------------------------------------------------
+good_morning:
+  alias: "Good Morning"
+  icon: mdi:weather-sunny
+  sequence:
+    - service: input_select.select_option
+      target:
+        entity_id: input_select.home_state
+      data:
+        option: Home
+    - service: input_boolean.turn_off
+      target:
+        entity_id: input_boolean.security_mode
+    # Restore default fan threshold
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.fan_temp_threshold_on
+      data:
+        value: 28
+    - service: input_number.set_value
+      target:
+        entity_id: input_number.light_auto_off_delay
+      data:
+        value: 10
+    - service: notify.persistent_notification
+      data:
+        title: "☀️ SmartNest"
+        message: "Good morning! Security mode is disarmed and system is in Home mode."
+
+# ---------------------------------------------------------------------------
+# All Lights Off Script
+# ---------------------------------------------------------------------------
+all_lights_off:
+  alias: "All Lights Off"
+  icon: mdi:lightbulb-off-outline
+  sequence:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.orion_living_room_light
+          - switch.orion_bedroom_light
+          - switch.orion_kitchen_light
+
+# ---------------------------------------------------------------------------
+# All Fans Off Script
+# ---------------------------------------------------------------------------
+all_fans_off:
+  alias: "All Fans Off"
+  icon: mdi:fan-off
+  sequence:
+    - service: switch.turn_off
+      target:
+        entity_id:
+          - switch.orion_living_room_fan
+          - switch.orion_bedroom_fan
+          - switch.orion_kitchen_exhaust_fan
+
+# ---------------------------------------------------------------------------
+# Panic / Emergency Script – turn on all lights and sound buzzer
+# ---------------------------------------------------------------------------
+emergency_all_on:
+  alias: "Emergency – All Lights ON + Alarm"
+  icon: mdi:alarm-light
+  sequence:
+    - service: switch.turn_on
+      target:
+        entity_id:
+          - switch.orion_living_room_light
+          - switch.orion_bedroom_light
+          - switch.orion_kitchen_light
+    - service: light.turn_on
+      target:
+        entity_id: light.orion_living_room_security_buzzer
+      data:
+        brightness: 255
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 EMERGENCY – SmartNest"
+        message: "Emergency script activated. All lights on and alarm sounding."

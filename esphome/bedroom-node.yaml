@@ -1,0 +1,134 @@
+# =============================================================================
+# Orion SmartNest – Bedroom ESP32 Node
+# Board   : ESP32-WROOM-32 / ESP32 DevKit v1
+# Features: PIR motion, DHT11 temp/humidity, relay light, relay fan,
+#            window magnetic sensor
+# =============================================================================
+
+substitutions:
+  device_name: orion-bedroom
+  friendly_name: "Orion Bedroom"
+  # GPIO assignments – see docs/pin-mapping.md
+  pir_pin: GPIO34           # PIR motion sensor (input-only pin)
+  dht_pin: GPIO21           # DHT11 data pin
+  relay_light_pin: GPIO26   # Relay channel 1 – bedroom light
+  relay_fan_pin: GPIO27     # Relay channel 2 – bedroom fan
+  window_sensor_pin: GPIO35 # Magnetic window sensor (input-only pin)
+
+esphome:
+  name: ${device_name}
+  friendly_name: ${friendly_name}
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+packages:
+  base: !include common/base-config.yaml
+
+# ---------------------------------------------------------------------------
+# PIR Motion Sensor
+# ---------------------------------------------------------------------------
+binary_sensor:
+  - platform: gpio
+    pin:
+      number: ${pir_pin}
+      mode: INPUT
+    name: "${friendly_name} Motion"
+    device_class: motion
+    id: pir_motion
+    filters:
+      - delayed_off: 500ms
+    on_press:
+      then:
+        - switch.turn_on: relay_light
+        - logger.log: "Bedroom motion detected – light ON"
+    on_release:
+      then:
+        - logger.log: "Bedroom motion cleared"
+
+  # Magnetic window sensor
+  - platform: gpio
+    pin:
+      number: ${window_sensor_pin}
+      mode: INPUT_PULLUP
+      inverted: true
+    name: "${friendly_name} Window"
+    device_class: window
+    id: window_sensor
+    on_press:
+      then:
+        - logger.log: "Bedroom window opened"
+    on_release:
+      then:
+        - logger.log: "Bedroom window closed"
+
+# ---------------------------------------------------------------------------
+# DHT11 Temperature & Humidity Sensor
+# ---------------------------------------------------------------------------
+sensor:
+  - platform: dht
+    pin: ${dht_pin}
+    model: DHT11
+    temperature:
+      name: "${friendly_name} Temperature"
+      id: bedroom_temp
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    humidity:
+      name: "${friendly_name} Humidity"
+      id: bedroom_humidity
+      accuracy_decimals: 1
+      filters:
+        - sliding_window_moving_average:
+            window_size: 5
+            send_every: 5
+    update_interval: 30s
+
+# ---------------------------------------------------------------------------
+# Relay Switches
+# ---------------------------------------------------------------------------
+switch:
+  - platform: gpio
+    pin:
+      number: ${relay_light_pin}
+      inverted: true
+    name: "${friendly_name} Light"
+    id: relay_light
+    icon: mdi:ceiling-light
+    restore_mode: RESTORE_DEFAULT_OFF
+
+  - platform: gpio
+    pin:
+      number: ${relay_fan_pin}
+      inverted: true
+    name: "${friendly_name} Fan"
+    id: relay_fan
+    icon: mdi:fan
+    restore_mode: RESTORE_DEFAULT_OFF
+
+# ---------------------------------------------------------------------------
+# Automation: fan control by temperature
+# ---------------------------------------------------------------------------
+interval:
+  - interval: 60s
+    then:
+      - if:
+          condition:
+            sensor.in_range:
+              id: bedroom_temp
+              above: 27.0
+          then:
+            - switch.turn_on: relay_fan
+          else:
+            - if:
+                condition:
+                  sensor.in_range:
+                    id: bedroom_temp
+                    below: 24.0
+                then:
+                  - switch.turn_off: relay_fan

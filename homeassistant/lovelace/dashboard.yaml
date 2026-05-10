@@ -1,0 +1,352 @@
+# =============================================================================
+# Orion SmartNest – Lovelace Dashboard Configuration
+# Strategy: YAML mode (managed manually in this file)
+#
+# To use this file in Home Assistant:
+#   1. Open Configuration → Lovelace Dashboards → Add Dashboard.
+#   2. Set Mode to YAML and point to this file, OR paste the views
+#      section into your default ui-lovelace.yaml.
+# =============================================================================
+
+title: "🏠 Orion SmartNest"
+views:
+
+  # ===========================================================================
+  # View 1 – Overview (landing page)
+  # ===========================================================================
+  - title: Overview
+    icon: mdi:home
+    path: overview
+    type: masonry
+    badges:
+      - entity: sensor.average_indoor_temperature
+        name: "Avg. Temp"
+      - entity: binary_sensor.orion_living_room_status
+        name: "Living Room"
+      - entity: binary_sensor.orion_bedroom_status
+        name: "Bedroom"
+      - entity: binary_sensor.orion_kitchen_status
+        name: "Kitchen"
+      - entity: input_select.home_state
+        name: "Home State"
+    cards:
+      # ------ Home State selector ----
+      - type: entity
+        entity: input_select.home_state
+        name: "🏠 Home State"
+        icon: mdi:home-outline
+
+      # ------ Quick Actions ------
+      - type: horizontal-stack
+        cards:
+          - type: button
+            name: "Good Night"
+            icon: mdi:weather-night
+            tap_action:
+              action: call-service
+              service: script.good_night
+            card_mod:
+              style: |
+                ha-card { background: #1a1a2e; color: white; border-radius: 12px; }
+
+          - type: button
+            name: "Good Morning"
+            icon: mdi:weather-sunny
+            tap_action:
+              action: call-service
+              service: script.good_morning
+            card_mod:
+              style: |
+                ha-card { background: #f4a261; color: white; border-radius: 12px; }
+
+          - type: button
+            name: "All Lights Off"
+            icon: mdi:lightbulb-off-outline
+            tap_action:
+              action: call-service
+              service: script.all_lights_off
+            card_mod:
+              style: |
+                ha-card { background: #264653; color: white; border-radius: 12px; }
+
+      # ------ Security Mode toggle ------
+      - type: entity
+        entity: input_boolean.security_mode
+        name: "🔒 Security Mode"
+        toggle: true
+
+      # ------ Energy summary ------
+      - type: glance
+        title: "⚡ Energy Summary"
+        entities:
+          - entity: sensor.orion_kitchen_power
+            name: "Kitchen Power"
+          - entity: sensor.orion_kitchen_energy
+            name: "Total Energy"
+          - entity: sensor.kitchen_estimated_daily_cost
+            name: "Daily Cost"
+          - entity: sensor.energy_daily
+            name: "Today (kWh)"
+          - entity: sensor.energy_monthly
+            name: "This Month"
+        columns: 3
+
+  # ===========================================================================
+  # View 2 – Living Room
+  # ===========================================================================
+  - title: Living Room
+    icon: mdi:sofa
+    path: living-room
+    type: masonry
+    cards:
+      - type: vertical-stack
+        title: "🛋️ Living Room"
+        cards:
+          # Sensor glance
+          - type: glance
+            title: "Environment"
+            entities:
+              - entity: sensor.orion_living_room_temperature
+                name: "Temperature"
+              - entity: sensor.orion_living_room_humidity
+                name: "Humidity"
+              - entity: binary_sensor.orion_living_room_motion
+                name: "Motion"
+              - entity: binary_sensor.orion_living_room_door
+                name: "Door"
+
+          # Device controls
+          - type: entities
+            title: "Devices"
+            entities:
+              - entity: switch.orion_living_room_light
+                name: "💡 Ceiling Light"
+              - entity: switch.orion_living_room_fan
+                name: "🌀 Ceiling Fan"
+              - entity: light.orion_living_room_security_buzzer
+                name: "🔔 Security Buzzer"
+                toggle: true
+
+          # Auto-off delay slider
+          - type: entity
+            entity: input_number.light_auto_off_delay
+            name: "⏱ Light Auto-Off Delay (min)"
+
+          # Diagnostic section
+          - type: entities
+            title: "Diagnostics"
+            show_header_toggle: false
+            entities:
+              - entity: sensor.orion_living_room_wi_fi_signal
+                name: "Wi-Fi Signal"
+              - entity: sensor.orion_living_room_uptime
+                name: "Uptime"
+              - entity: sensor.orion_living_room_ip_address
+                name: "IP Address"
+
+  # ===========================================================================
+  # View 3 – Bedroom
+  # ===========================================================================
+  - title: Bedroom
+    icon: mdi:bed
+    path: bedroom
+    type: masonry
+    cards:
+      - type: vertical-stack
+        title: "🛏️ Bedroom"
+        cards:
+          - type: glance
+            title: "Environment"
+            entities:
+              - entity: sensor.orion_bedroom_temperature
+                name: "Temperature"
+              - entity: sensor.orion_bedroom_humidity
+                name: "Humidity"
+              - entity: binary_sensor.orion_bedroom_motion
+                name: "Motion"
+              - entity: binary_sensor.orion_bedroom_window
+                name: "Window"
+
+          - type: entities
+            title: "Devices"
+            entities:
+              - entity: switch.orion_bedroom_light
+                name: "💡 Bedroom Light"
+              - entity: switch.orion_bedroom_fan
+                name: "🌀 Bedroom Fan"
+
+          - type: entity
+            entity: input_number.light_auto_off_delay
+            name: "⏱ Light Auto-Off Delay (min)"
+
+          - type: entities
+            title: "Diagnostics"
+            show_header_toggle: false
+            entities:
+              - entity: sensor.orion_bedroom_wi_fi_signal
+                name: "Wi-Fi Signal"
+              - entity: sensor.orion_bedroom_uptime
+                name: "Uptime"
+              - entity: sensor.orion_bedroom_ip_address
+                name: "IP Address"
+
+  # ===========================================================================
+  # View 4 – Kitchen
+  # ===========================================================================
+  - title: Kitchen
+    icon: mdi:silverware-fork-knife
+    path: kitchen
+    type: masonry
+    cards:
+      - type: vertical-stack
+        title: "🍳 Kitchen"
+        cards:
+          - type: glance
+            title: "Environment"
+            entities:
+              - entity: sensor.orion_kitchen_temperature
+                name: "Temperature"
+              - entity: sensor.orion_kitchen_humidity
+                name: "Humidity"
+              - entity: binary_sensor.orion_kitchen_motion
+                name: "Motion"
+              - entity: binary_sensor.orion_kitchen_door
+                name: "Door"
+
+          - type: entities
+            title: "Devices"
+            entities:
+              - entity: switch.orion_kitchen_light
+                name: "💡 Kitchen Light"
+              - entity: switch.orion_kitchen_exhaust_fan
+                name: "🌀 Exhaust Fan"
+
+          - type: glance
+            title: "⚡ Energy Monitor (PZEM-004T)"
+            entities:
+              - entity: sensor.orion_kitchen_voltage
+                name: "Voltage (V)"
+              - entity: sensor.orion_kitchen_current
+                name: "Current (A)"
+              - entity: sensor.orion_kitchen_power
+                name: "Power (W)"
+              - entity: sensor.orion_kitchen_energy
+                name: "Energy (kWh)"
+              - entity: sensor.orion_kitchen_frequency
+                name: "Frequency (Hz)"
+              - entity: sensor.orion_kitchen_power_factor
+                name: "Power Factor"
+
+          - type: entities
+            title: "Diagnostics"
+            show_header_toggle: false
+            entities:
+              - entity: sensor.orion_kitchen_wi_fi_signal
+                name: "Wi-Fi Signal"
+              - entity: sensor.orion_kitchen_uptime
+                name: "Uptime"
+              - entity: sensor.orion_kitchen_ip_address
+                name: "IP Address"
+
+  # ===========================================================================
+  # View 5 – Security
+  # ===========================================================================
+  - title: Security
+    icon: mdi:shield-lock
+    path: security
+    type: masonry
+    cards:
+      - type: entity
+        entity: input_boolean.security_mode
+        name: "🔒 Security Mode"
+        toggle: true
+
+      - type: glance
+        title: "🚪 Entry Points"
+        entities:
+          - entity: binary_sensor.orion_living_room_door
+            name: "Living Room Door"
+          - entity: binary_sensor.orion_bedroom_window
+            name: "Bedroom Window"
+          - entity: binary_sensor.orion_kitchen_door
+            name: "Kitchen Door"
+
+      - type: glance
+        title: "🏃 Motion Sensors"
+        entities:
+          - entity: binary_sensor.orion_living_room_motion
+            name: "Living Room"
+          - entity: binary_sensor.orion_bedroom_motion
+            name: "Bedroom"
+          - entity: binary_sensor.orion_kitchen_motion
+            name: "Kitchen"
+
+      - type: entity
+        entity: light.orion_living_room_security_buzzer
+        name: "🔔 Security Buzzer"
+        toggle: true
+
+      - type: history-graph
+        title: "Door/Window History (24h)"
+        hours_to_show: 24
+        entities:
+          - entity: binary_sensor.orion_living_room_door
+            name: "Living Room Door"
+          - entity: binary_sensor.orion_bedroom_window
+            name: "Bedroom Window"
+          - entity: binary_sensor.orion_kitchen_door
+            name: "Kitchen Door"
+
+  # ===========================================================================
+  # View 6 – Energy
+  # ===========================================================================
+  - title: Energy
+    icon: mdi:flash
+    path: energy
+    type: masonry
+    cards:
+      - type: glance
+        title: "⚡ Real-time Power"
+        entities:
+          - entity: sensor.orion_kitchen_power
+            name: "Kitchen"
+          - entity: sensor.total_instantaneous_power
+            name: "Total"
+
+      - type: glance
+        title: "📊 Energy Usage"
+        entities:
+          - entity: sensor.energy_daily
+            name: "Today"
+          - entity: sensor.energy_monthly
+            name: "This Month"
+          - entity: sensor.energy_yearly
+            name: "This Year"
+          - entity: sensor.kitchen_estimated_daily_cost
+            name: "Daily Cost $"
+
+      - type: history-graph
+        title: "Kitchen Power (24h)"
+        hours_to_show: 24
+        entities:
+          - entity: sensor.orion_kitchen_power
+            name: "Kitchen Power (W)"
+
+      - type: entity
+        entity: input_number.appliance_alert_duration
+        name: "⏱ Appliance Alert Threshold (min)"
+
+      - type: entity
+        entity: input_boolean.energy_saving_mode
+        name: "🌿 Energy Saving Mode"
+        toggle: true
+
+      - type: glance
+        title: "⚙️ Thresholds"
+        entities:
+          - entity: input_number.fan_temp_threshold_on
+            name: "Fan ON (°C)"
+          - entity: input_number.fan_temp_threshold_off
+            name: "Fan OFF (°C)"
+          - entity: input_number.light_auto_off_delay
+            name: "Light Off (min)"

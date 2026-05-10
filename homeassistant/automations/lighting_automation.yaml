@@ -1,0 +1,147 @@
+# =============================================================================
+# Orion SmartNest – Lighting Automations
+# Rules:
+#   1. Turn light ON when motion is detected in any room.
+#   2. Turn light OFF after configurable inactivity period (default 10 min).
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Living Room – Turn light ON on motion
+# ---------------------------------------------------------------------------
+- id: living_room_light_on_motion
+  alias: "Lighting | Living Room – Light ON (motion)"
+  description: "Turn the living room light on when motion is detected."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_living_room_motion
+      to: "on"
+  condition:
+    # Only fire if light is not already on (avoids unnecessary writes)
+    - condition: state
+      entity_id: switch.orion_living_room_light
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_living_room_light
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 2. Living Room – Turn light OFF after inactivity period
+# ---------------------------------------------------------------------------
+- id: living_room_light_off_no_motion
+  alias: "Lighting | Living Room – Light OFF (no motion)"
+  description: >
+    Turn the living room light off after the configured inactivity delay
+    once motion stops. Delay is read from the input_number helper.
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_living_room_motion
+      to: "off"
+      for:
+        minutes: "{{ states('input_number.light_auto_off_delay') | int }}"
+  condition:
+    - condition: state
+      entity_id: switch.orion_living_room_light
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_living_room_light
+    - service: logbook.log
+      data:
+        name: "SmartNest"
+        message: "Living room light auto-off – no motion for {{ states('input_number.light_auto_off_delay') | int }} minutes."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 3. Bedroom – Turn light ON on motion
+# ---------------------------------------------------------------------------
+- id: bedroom_light_on_motion
+  alias: "Lighting | Bedroom – Light ON (motion)"
+  description: "Turn the bedroom light on when motion is detected."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_bedroom_motion
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: switch.orion_bedroom_light
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_bedroom_light
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 4. Bedroom – Turn light OFF after inactivity period
+# ---------------------------------------------------------------------------
+- id: bedroom_light_off_no_motion
+  alias: "Lighting | Bedroom – Light OFF (no motion)"
+  description: "Turn the bedroom light off after the configured inactivity delay."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_bedroom_motion
+      to: "off"
+      for:
+        minutes: "{{ states('input_number.light_auto_off_delay') | int }}"
+  condition:
+    - condition: state
+      entity_id: switch.orion_bedroom_light
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_bedroom_light
+    - service: logbook.log
+      data:
+        name: "SmartNest"
+        message: "Bedroom light auto-off – no motion for {{ states('input_number.light_auto_off_delay') | int }} minutes."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 5. Kitchen – Turn light ON on motion
+# ---------------------------------------------------------------------------
+- id: kitchen_light_on_motion
+  alias: "Lighting | Kitchen – Light ON (motion)"
+  description: "Turn the kitchen light on when motion is detected."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_kitchen_motion
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: switch.orion_kitchen_light
+      state: "off"
+  action:
+    - service: switch.turn_on
+      target:
+        entity_id: switch.orion_kitchen_light
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 6. Kitchen – Turn light OFF after inactivity period
+# ---------------------------------------------------------------------------
+- id: kitchen_light_off_no_motion
+  alias: "Lighting | Kitchen – Light OFF (no motion)"
+  description: "Turn the kitchen light off after the configured inactivity delay."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_kitchen_motion
+      to: "off"
+      for:
+        minutes: "{{ states('input_number.light_auto_off_delay') | int }}"
+  condition:
+    - condition: state
+      entity_id: switch.orion_kitchen_light
+      state: "on"
+  action:
+    - service: switch.turn_off
+      target:
+        entity_id: switch.orion_kitchen_light
+    - service: logbook.log
+      data:
+        name: "SmartNest"
+        message: "Kitchen light auto-off – no motion for {{ states('input_number.light_auto_off_delay') | int }} minutes."
+  mode: single

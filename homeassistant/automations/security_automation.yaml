@@ -1,0 +1,182 @@
+# =============================================================================
+# Orion SmartNest – Security Automations
+# Rules:
+#   1. Alert when door/window opens while Security Mode is active.
+#   2. Alert on motion detection while Security Mode is active.
+#   3. Trigger buzzer siren on security breach.
+#   4. Notify when Security Mode is armed / disarmed.
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# 1. Living Room Door – Alert when opened in Security Mode
+# ---------------------------------------------------------------------------
+- id: security_living_room_door_alert
+  alias: "Security | Living Room – Door opened (security mode active)"
+  description: "Send alert and trigger buzzer when living room door opens in security mode."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_living_room_door
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 SECURITY ALERT – SmartNest"
+        message: "⚠️ Living room door was opened while security mode is ACTIVE!"
+        notification_id: "security_alert_living_room_door"
+    # Trigger buzzer siren on the living-room node (light entity mapped to buzzer output)
+    - service: light.turn_on
+      target:
+        entity_id: light.orion_living_room_security_buzzer
+      data:
+        brightness: 255
+    # Auto-silence buzzer after 30 seconds
+    - delay: "00:00:30"
+    - service: light.turn_off
+      target:
+        entity_id: light.orion_living_room_security_buzzer
+    - service: logbook.log
+      data:
+        name: "SmartNest Security"
+        message: "ALERT: Living room door opened during security mode."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 2. Bedroom Window – Alert when opened in Security Mode
+# ---------------------------------------------------------------------------
+- id: security_bedroom_window_alert
+  alias: "Security | Bedroom – Window opened (security mode active)"
+  description: "Send alert when bedroom window opens in security mode."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_bedroom_window
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 SECURITY ALERT – SmartNest"
+        message: "⚠️ Bedroom window was opened while security mode is ACTIVE!"
+        notification_id: "security_alert_bedroom_window"
+    - service: logbook.log
+      data:
+        name: "SmartNest Security"
+        message: "ALERT: Bedroom window opened during security mode."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 3. Kitchen Door – Alert when opened in Security Mode
+# ---------------------------------------------------------------------------
+- id: security_kitchen_door_alert
+  alias: "Security | Kitchen – Door opened (security mode active)"
+  description: "Send alert when kitchen door opens in security mode."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_kitchen_door
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 SECURITY ALERT – SmartNest"
+        message: "⚠️ Kitchen door was opened while security mode is ACTIVE!"
+        notification_id: "security_alert_kitchen_door"
+    - service: logbook.log
+      data:
+        name: "SmartNest Security"
+        message: "ALERT: Kitchen door opened during security mode."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 4. Motion Alert in Security Mode (all rooms)
+# ---------------------------------------------------------------------------
+- id: security_motion_alert_living_room
+  alias: "Security | Living Room – Motion detected (security mode active)"
+  description: "Alert when motion is detected in living room while security mode is active."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_living_room_motion
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 INTRUDER ALERT – SmartNest"
+        message: "🏃 Motion detected in the LIVING ROOM while security mode is active!"
+        notification_id: "security_motion_living_room"
+    - service: logbook.log
+      data:
+        name: "SmartNest Security"
+        message: "ALERT: Motion in living room during security mode."
+  mode: single
+
+- id: security_motion_alert_bedroom
+  alias: "Security | Bedroom – Motion detected (security mode active)"
+  description: "Alert when motion is detected in bedroom while security mode is active."
+  trigger:
+    - platform: state
+      entity_id: binary_sensor.orion_bedroom_motion
+      to: "on"
+  condition:
+    - condition: state
+      entity_id: input_boolean.security_mode
+      state: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🚨 INTRUDER ALERT – SmartNest"
+        message: "🏃 Motion detected in the BEDROOM while security mode is active!"
+        notification_id: "security_motion_bedroom"
+    - service: logbook.log
+      data:
+        name: "SmartNest Security"
+        message: "ALERT: Motion in bedroom during security mode."
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 5. Security Mode Armed notification
+# ---------------------------------------------------------------------------
+- id: security_mode_armed
+  alias: "Security | Security Mode ARMED"
+  description: "Notify when security mode is switched on."
+  trigger:
+    - platform: state
+      entity_id: input_boolean.security_mode
+      to: "on"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🔒 SmartNest Security"
+        message: "Security mode has been ARMED. All entry points are being monitored."
+        notification_id: "security_mode_status"
+  mode: single
+
+# ---------------------------------------------------------------------------
+# 6. Security Mode Disarmed notification
+# ---------------------------------------------------------------------------
+- id: security_mode_disarmed
+  alias: "Security | Security Mode DISARMED"
+  description: "Notify when security mode is switched off."
+  trigger:
+    - platform: state
+      entity_id: input_boolean.security_mode
+      to: "off"
+  action:
+    - service: notify.persistent_notification
+      data:
+        title: "🔓 SmartNest Security"
+        message: "Security mode has been DISARMED."
+        notification_id: "security_mode_status"
+  mode: single

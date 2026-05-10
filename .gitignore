@@ -1,0 +1,29 @@
+# ESPHome build artifacts
+esphome/.esphome/
+esphome/build/
+esphome/cache/
+esphome/secrets.yaml
+
+# Home Assistant sensitive files
+homeassistant/secrets.yaml
+homeassistant/.storage/
+homeassistant/.cloud/
+homeassistant/home-assistant_v2.db
+homeassistant/home-assistant_v2.db-shm
+homeassistant/home-assistant_v2.db-wal
+homeassistant/home-assistant.log
+homeassistant/home-assistant.log.1
+
+# Python artifacts
+__pycache__/
+*.pyc
+*.pyo
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+
+# Editor artifacts
+.vscode/
+*.swp
+*.swo
